@@ -37,11 +37,11 @@ const ch=d=>`<svg viewBox="0 0 24 24" style="transform:rotate(${d}deg)"><path d=
 function exploreView(){VH=7;VW=Math.max(10,Math.min(26,Math.round(VH*innerWidth/innerHeight)));
 document.getElementById("app").innerHTML=`<div class="ex"><canvas id="cv" width="${VW*TS}" height="${VH*TS}"></canvas>
 <div class="exhud"><button class="xb" onclick="go('home')">‹ Lobby</button><div class="exr"><span id="exb"></span><button class="xb" id="mu2" onclick="toggleMute()"></button><button class="xb" id="ltb" onclick="toggleLite()"></button><button class="xb" onclick="go('store')">Store</button></div></div>
-<canvas id="mini" width="${MW}" height="${MH}"></canvas><div id="plz">Plaza · trade with friends</div><div id="chal"></div><div id="enc"></div><div class="joy" id="joy"><div class="knob" id="knob"></div></div></div>`;
+<canvas id="mini" width="${MW}" height="${MH}"></canvas><div id="plz">Plaza · trade with friends</div><button class="emb" id="emb" onclick="toggleEm()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14a4.5 4.5 0 008 0M9 10h.01M15 10h.01"/></svg></button><div id="emw"></div><div id="chal"></div><div id="enc"></div><div class="joy" id="joy"><div class="knob" id="knob"></div></div></div>`;
 bindJoy();paintMute();applyLite();hud();others={};E.ls=0;E.cx=0;E.jx=E.jy=0;E.joy=false;PT.length=0;E.ck="";window.mp&&mp.start(syncOthers);E.hold=null;E.last=0;runId++;const id=runId;requestAnimationFrame(t=>loop(t,id))}
 const hold=d=>{const v=DIRS[d];E.joy=true;E.jx=v[0];E.jy=v[1]},rel=()=>{E.joy=false;E.jx=E.jy=0};
 const KEYS={},PT=[];
-const walk=(x,y)=>x>=0&&y>=0&&x<MW&&y<MH&&[0,2,3,4,7,11,12,14].includes(EMAP[y][x]);
+const walk=(x,y)=>x>=0&&y>=0&&x<MW&&y<MH&&[0,2,3,4,7,11,12,14].includes(EMAP[y][x])&&!(EMAP[y][x]==7&&Date.now()<(E.labOut||0));
 addEventListener("keydown",e=>{if(view=="explore"&&/^(Arrow|[wasd]$)/.test(e.key)){KEYS[e.key]=1;e.preventDefault()}});
 addEventListener("keyup",e=>{delete KEYS[e.key]});
 // smooth free movement: speed ramps up and down, slides along walls, runs when the stick is pushed fully
@@ -64,7 +64,7 @@ function loop(ts,id){if(view!="explore"){if(id===runId){window.mp&&(mp.stop(),mp
 if(LMODE=="auto"&&!LITE){E.fa=(E.fa||16)*.96+dt*.04;E.fc=(E.fc||0)+1;if(E.fc>150&&E.fa>27){LITE=true;applyLite()}}
 move(dt);
 if(ts-(E.hs||0)>1000){E.hs=ts;hud()}if(ts-(E.ms||0)>300){E.ms=ts;drawMini()}social();const cv=document.getElementById("cv");if(!cv)return;draw(cv.getContext("2d"));requestAnimationFrame(t=>loop(t,id))}
-function arrive(){if(EMAP[E.y][E.x]==7){enterLab();return}if(EMAP[E.y][E.x]==2)sfx("grass");if(EMAP[E.y][E.x]==2&&Math.random()<(S.lure>Date.now()?.28:.14))encounter()}
+function arrive(){if(EMAP[E.y][E.x]==7){if(Date.now()>(E.labOut||0))enterLab();return}if(EMAP[E.y][E.x]==2)sfx("grass");if(EMAP[E.y][E.x]==2&&Math.random()<(S.lure>Date.now()?.28:.14))encounter()}
 async function encounter(){busyE=true;{const n=document.getElementById("cv");n&&(n.classList.add("flash"),setTimeout(()=>n.classList.remove("flash"),520))}try{const ids=[];while(ids.length<4){const i=1+Math.floor(Math.random()*TOTAL);if(!ids.includes(i))ids.push(i)}
 const c=await Promise.all(ids.map(getP)),W={common:62,rare:25,epic:10,legendary:3},tot=c.reduce((a,p)=>a+W[p.rar],0);let q=Math.random()*tot,k=0;for(;k<c.length-1;k++){q-=W[c[k].rar];if(q<=0)break}
 await new Promise(r=>setTimeout(r,450));E.enc=c[k];const p=c[k];const el=document.getElementById("enc");if(!el||view!="explore"){E.enc=null;busyE=false;return}
@@ -78,7 +78,7 @@ if(Math.random()<Math.min(.95,CP[p.rar]*{p:1,g:1.5,u:2}[t])){addCard(slim(p));do
 else if(Math.random()<.35)done(cap(p.name)+" ran away!");else{m.textContent="It broke free!";document.getElementById("eb").innerHTML=ballBtns();save()}}
 const hs=(x,y,k=0)=>{let h=Math.imul(x+k*131,374761393)^Math.imul(y+k*17,668265263);h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967295};
 const at=(x,y)=>EMAP[y]&&EMAP[y][x]!=null?EMAP[y][x]:1;
-function draw(c){const fx=E.px-.5,fy=E.py-.5,tm=performance.now()/1000;
+function draw(c){const fx=E.px-.5,fy=E.py-.5,tm=performance.now()/1000,nowE=Date.now();
 const ox=Math.round(Math.max(0,Math.min(MW*TS-VW*TS,E.cx-VW*TS/2))),oy=Math.round(Math.max(0,Math.min(MH*TS-VH*TS,E.cy-VH*TS/2)));
 const x0=Math.floor(ox/TS),x1=Math.ceil((ox+VW*TS)/TS),y0=Math.floor(oy/TS),y1=Math.ceil((oy+VH*TS)/TS)+1;
 c.imageSmoothingEnabled=false;
@@ -86,7 +86,7 @@ for(let y=y0-1;y<=y1;y++)for(let x=x0;x<=x1;x++){const t=at(x,y),an=!LITE&&(t==2
 const px=Math.round(fx*TS-ox),py=Math.round(E.py*TS-29-oy),objs=[];
 for(let y=y0;y<=y1+1;y++)for(let x=x0-1;x<=x1;x++)if(at(x,y)==1&&y>=0&&x>=0&&y<MH&&x<MW)objs.push([y,0,x]);
 objs.push([E.py,1]);for(const u in others)objs.push([others[u].py+.5,2,others[u]]);objs.sort((a,b)=>a[0]-b[0]);
-for(const o of objs){if(o[1]==1)player(c,px,py,tm);else if(o[1]==2){const u=o[2],qx=Math.round(u.px*TS-ox),qy=Math.round((u.py+.5)*TS-29-oy);player(c,qx,qy,tm,{d:u.d,mv:u.mv,k:"#3b82f6"});tag(c,qx,qy,u.name)}else c.drawImage(treeImg(o[2],o[0]),o[2]*TS-ox,o[0]*TS-oy-10)}
+for(const o of objs){if(o[1]==1){player(c,px,py,tm);if(E.em!=null&&nowE<E.eUntil)ebub(c,px,py,E.em,(E.eUntil-nowE)/3e3)}else if(o[1]==2){const u=o[2],qx=Math.round(u.px*TS-ox),qy=Math.round((u.py+.5)*TS-29-oy);player(c,qx,qy,tm,{d:u.d,mv:u.mv,k:"#3b82f6"});tag(c,qx,qy,u.name);if(u.em!=null&&nowE<u.eUntil)ebub(c,qx,qy-12,u.em,(u.eUntil-nowE)/3e3)}else c.drawImage(treeImg(o[2],o[0]),o[2]*TS-ox,o[0]*TS-oy-10)}
 {const gx=Math.floor(E.px),gy=Math.floor(E.py);if(at(gx,gy)==2)blades(c,gx,gy,px,py+14,tm,true)}
 for(const p of PT){c.globalAlpha=Math.max(0,p.l/p.m);c.fillStyle=p.c;c.fillRect(Math.round(p.x-ox),Math.round(p.y-oy),p.r,p.r)}c.globalAlpha=1;
 if(!LITE){const k=VW+"x"+VH;if(VIGK!=k){VIG=document.createElement("canvas");VIG.width=VW*TS;VIG.height=VH*TS;const g=VIG.getContext("2d"),gr=g.createRadialGradient(VW*TS/2,VH*TS/2,VH*TS*.45,VW*TS/2,VH*TS/2,VW*TS*.75);gr.addColorStop(0,"#0000");gr.addColorStop(1,"#0a1a2a55");g.fillStyle=gr;g.fillRect(0,0,VW*TS,VH*TS);VIGK=k}c.drawImage(VIG,0,0)}}
@@ -144,7 +144,7 @@ R(x+10,Y+5,12,11,sk);if(d==0)R(x+10,Y+5,12,9,"#3a2a1a");R(x+8,Y+1,16,7,k);R(x+9,
 if(d==2){R(x+9,Y+7,14,2,k);R(x+14,Y+2,4,4,"#fff");R(x+12,Y+11,2,3,"#1f1f2e");R(x+18,Y+11,2,3,"#1f1f2e")}}}
 function tag(c,x,y,n){c.font="bold 9px sans-serif";const w=c.measureText(n).width+8;c.fillStyle="#000b";c.fillRect(x+16-w/2,y-10,w,12);c.fillStyle="#fff";c.textAlign="center";c.fillText(n,x+16,y-1);c.textAlign="left"}
 function syncOthers(list){const me=mp.uid(),now=Date.now();for(const p of list){if(p.uid==me)continue;const o=others[p.uid];
-if(o){if(o.ts!=p.ts)o.rx=now;o.ts=p.ts;o.tx=p.x;o.ty=p.y;o.d=p.d;o.name=p.name}else if(now-p.ts<6e4)others[p.uid]={uid:p.uid,name:p.name,tx:p.x,ty:p.y,px:p.x,py:p.y,d:p.d,mv:false,ts:p.ts,rx:now}}}
+if(o){if(o.ts!=p.ts)o.rx=now;o.ts=p.ts;o.tx=p.x;o.ty=p.y;o.d=p.d;o.name=p.name}else if(now-p.ts<6e4)others[p.uid]={uid:p.uid,name:p.name,tx:p.x,ty:p.y,px:p.x,py:p.y,d:p.d,mv:false,ts:p.ts,rx:now};const q=others[p.uid];if(q&&p.et&&p.et!=q.et0){const fresh=q.et0!==undefined||now-p.et<6e3;q.et0=p.et;if(fresh&&p.em!=null){q.em=p.em;q.eUntil=now+3000;sfx("pop")}}}}
 function social(){const now=Date.now();
 for(const u in others){const o=others[u];if(now-o.rx>4e4){delete others[u];continue}const q=Math.min(1,(E.ds||.016)*4.5);o.px+=(o.tx-o.px)*q;o.py+=(o.ty-o.py)*q;o.mv=Math.abs(o.tx-o.px)+Math.abs(o.ty-o.py)>.08}
 if(window.mp&&(E.tx!=E.lx||E.ty!=E.ly||E.d!=E.ld||now-E.ls>8e3)&&now-E.ls>450){E.lx=E.tx;E.ly=E.ty;E.ld=E.d;E.ls=now;mp.pos(E.tx,E.ty,E.d)}

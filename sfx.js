@@ -14,7 +14,7 @@ encounter:()=>{notes([392,494,587,784],.1,"square",.12,.08);noise(.12,.08)},hit:
 sup:()=>{noise(.2,.3,0,3000);tone(240,.2,"sawtooth",.22,0,-140);tone(700,.12,"square",.12,.09)},weak:()=>{noise(.08,.08);tone(160,.16,"triangle",.14,0,-50)},
 faint:()=>tone(420,.55,"sawtooth",.16,0,-350),throw:()=>tone(280,.45,"sine",.14,0,600),shake:()=>{tone(210,.07,"square",.1);tone(170,.07,"square",.1,.09)},
 catch:()=>notes([523,659,784,1047,1319],.15,"square",.13,.11),fail:()=>tone(320,.45,"sawtooth",.13,0,-220),run:()=>tone(500,.25,"triangle",.12,0,-300),
-buy:()=>{tone(880,.07,"square",.1);tone(1320,.12,"square",.1,.07)},lvl:()=>notes([523,659,784,988,1319],.14,"triangle",.17,.09),
+pop:()=>{tone(520,.08,"sine",.12,0,300);tone(780,.1,"sine",.1,.06)},buy:()=>{tone(880,.07,"square",.1);tone(1320,.12,"square",.1,.07)},lvl:()=>notes([523,659,784,988,1319],.14,"triangle",.17,.09),
 win:()=>notes([523,659,784,1047],.2,"square",.13,.15),lose:()=>notes([392,330,262],.28,"triangle",.15,.2)};
 function sfx(n){try{SFX[n]&&SFX[n]()}catch(e){}}
 const ON='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>',OFF='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></svg>';

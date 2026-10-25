@@ -2,9 +2,9 @@
 const POTION_COST=25,MAXLV=10;let labSel=null;
 function labEl(){let e=document.getElementById("lab");if(!e){e=document.createElement("div");e.id="lab";document.body.appendChild(e)}return e}
 const labNeed=o=>(o.lv||1);
-function enterLab(){E.hold=null;E.enc={lab:true};sfx("door");
+function enterLab(){E.hold=null;E.joy=false;E.jx=E.jy=0;E.vx=E.vy=0;E.enc={lab:true};sfx("door");
 const list=Object.values(S.col);labSel=list.length?(S.col[labSel]?labSel:eff(list.sort((a,b)=>pw(eff(b))-pw(eff(a)))[0]).id):null;labDraw();labEl().classList.add("show")}
-function labClose(){labEl().classList.remove("show");E.x=E.tx=12;E.y=E.ty=14;E.t=1;E.d=2;E.enc=null;E.hold=null;hdr();sfx("door")}
+function labClose(){labEl().classList.remove("show");E.px=12.5;E.py=14.9;E.x=12;E.y=14;E.tx=12;E.ty=14;E.vx=E.vy=0;E.sp=0;E.d=2;E.cx=0;E.jx=E.jy=0;E.joy=false;E.hold=null;E.labOut=Date.now()+1500;E.enc=null;hdr();sfx("door")}
 function labPick(id){labSel=id;labDraw()}
 function labBuy(n){const c=n==5?POTION_COST*5-10:POTION_COST*n;if(S.coins<c)return;S.coins-=c;S.pot=(S.pot||0)+n;save();hdr();sfx("buy");labDraw()}
 function labUp(){const o=S.col[labSel];if(!o)return;const lv=o.lv||1,need=labNeed(o);if(lv>=MAXLV||(S.pot||0)<need)return;
