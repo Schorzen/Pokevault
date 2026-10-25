@@ -3,7 +3,7 @@ import {auth,db} from "./firebase.js";
 import {doc,getDoc,setDoc,collection,query,orderBy,limit,getDocs,where,addDoc,updateDoc,runTransaction,onSnapshot,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 let uid=null,timer;
 window.cloudSave=s=>{if(!uid)return;clearTimeout(timer);timer=setTimeout(()=>
- setDoc(doc(db,"users",uid),{packs:s.packs,t:s.t,col:s.col,coins:s.coins,daily:s.daily,wins:s.wins||0,bt:s.bt||0,team:s.team||null,balls:s.balls??10,bl:s.bl||Date.now(),gb:s.gb||0,ub:s.ub||0,lure:s.lure||0,pot:s.pot||0,count:Object.keys(s.col).length,
+ setDoc(doc(db,"users",uid),{packs:s.packs,t:s.t,col:s.col,coins:s.coins,daily:s.daily,wins:s.wins||0,bt:s.bt||0,team:s.team||null,balls:s.balls??10,bl:s.bl||Date.now(),gb:s.gb||0,ub:s.ub||0,lure:s.lure||0,pot:s.pot||0,ld:s.ld||"",count:Object.keys(s.col).length,
  name:auth.currentUser?.displayName||"Trainer"},{merge:true}).catch(console.error),800)};
 const nm=()=>auth.currentUser?.displayName||"Trainer",tc=()=>collection(db,"trades"),pk=s=>s.docs.map(d=>({id:d.id,...d.data()}));
 window.trade={
@@ -27,13 +27,18 @@ window.mp={uid:()=>uid,
  challenge:(to,toName,team)=>setDoc(doc(db,"duels",uid+"_"+to),{from:uid,to,fromName:nm(),toName,status:"pending",teamFrom:team,ts:Date.now()}),
  accept:(id,team)=>updateDoc(doc(db,"duels",id),{status:"accepted",teamTo:team}),
  decline:id=>updateDoc(doc(db,"duels",id),{status:"declined"}),
- finish:(id,res)=>updateDoc(doc(db,"duels",id),{status:"done",res,t2:Date.now()})};
-window.onSignOut=()=>{clearTimeout(timer);uid=null;window.myName="";stopD()};
+ finish:(id,res)=>updateDoc(doc(db,"duels",id),{status:"done",res,t2:Date.now()}),
+ liveInvite:(to,toName)=>setDoc(doc(db,"live",[uid,to].sort().join("_")),{players:[uid,to],from:uid,fromName:nm(),toName,st:"invite",offer:{[uid]:[],[to]:[]},conf:{[uid]:false,[to]:false},ts:Date.now()}),
+ liveSet:(id,f)=>updateDoc(doc(db,"live",id),f),
+ liveFinish:id=>runTransaction(db,async tx=>{const r=doc(db,"live",id),s=await tx.get(r),d=s.data();if(!d||d.st!=="open"||!d.players.every(p=>d.conf&&d.conf[p]))throw new Error("no");tx.update(r,{st:"done",t2:Date.now()})})};
+let unsubL=null;const stopL=()=>{unsubL&&unsubL();unsubL=null};
+function watchLive(){stopL();unsubL=onSnapshot(query(collection(db,"live"),where("players","array-contains",uid)),s=>s.docChanges().forEach(c=>{if(c.type!="removed"&&window.onLive)window.onLive({id:c.doc.id,...c.doc.data()})}),()=>{})}
+window.onSignOut=()=>{clearTimeout(timer);uid=null;window.myName="";stopD();stopL()};
 window.onUser=async u=>{
- if(!u){uid=null;stopD();return}
+ if(!u){uid=null;stopD();stopL();return}
  try{const s=await getDoc(doc(db,"users",u.uid));
- uid=u.uid;window.myName=u.displayName||"Trainer";window.render&&render();watchDuels();
- if(s.exists()){const d=s.data();setState({packs:d.packs,t:d.t,col:d.col||{},coins:d.coins??30,daily:d.daily||0,wins:d.wins||0,bt:d.bt||0,team:d.team||null,balls:d.balls??10,bl:d.bl||Date.now(),gb:d.gb||0,ub:d.ub||0,lure:d.lure||0,pot:d.pot||0})}
+ uid=u.uid;window.myName=u.displayName||"Trainer";window.render&&render();watchDuels();watchLive();
+ if(s.exists()){const d=s.data();setState({packs:d.packs,t:d.t,col:d.col||{},coins:d.coins??30,daily:d.daily||0,wins:d.wins||0,bt:d.bt||0,team:d.team||null,balls:d.balls??10,bl:d.bl||Date.now(),gb:d.gb||0,ub:d.ub||0,lure:d.lure||0,pot:d.pot||0,ld:d.ld||""})}
  else window.cloudSave(getState())}finally{window.bootDone&&bootDone()}};
 window.cloud=Object.assign(window.cloud||{},{
  async top(){return (await getDocs(query(collection(db,"users"),orderBy("count","desc"),limit(20)))).docs.map(d=>d.data())}});
